@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.company.dao.OrderSettingDao">
+    <!--根据预约日期查询-->
+    <select id="findCountByOrderDate" parameterType="java.util.Date" resultType="long">
+        select count(*) from t_ordersetting where orderDate = #{orderDate}
+    </select>
+
+    <!--新增-->
+    <insert id="add" parameterType="ordersetting">
+        insert into t_ordersetting(orderDate,number,reservations) values (#{orderDate},#{number},#{reservations})
+    </insert>
+
+    <!--根据日期更新预约人数-->
+    <update id="editNumberByOrderDate" parameterType="orderSetting">
+        update t_ordersetting set number = #{number} where orderDate = #{orderDate}
+    </update>
+
+    <!--根据月份查询预约设置信息-->
+    <select id="getOrderSettingByMonth" resultType="orderSetting">
+         select * from t_ordersetting where orderDate like concat(#{date},'%')
+    </select>
+    <select id="findOrderSettingObjectByOrderDate" resultType="OrderSetting">
+         select * from t_OrderSetting where orderDate=#{orderDate}
+    </select>
+
+    <update id="editReservations">
+
+        update t_orderSetting set reservations=#{reservations}
+        where orderDate=#{orderDate}
+    </update>
+
+
+
+</mapper>

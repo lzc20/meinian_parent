@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.company.dao.TravelGroupDao">
+    <insert id="add" useGeneratedKeys="true" keyProperty="id">
+        insert into t_travelgroup ( code, name, helpCode, sex, remark, attention) values(
+           #{code}, #{name}, #{helpCode}, #{sex}, #{remark}, #{attention}
+        )
+    </insert>
+    <insert id="insert_travelGroup_travelItem" parameterType="map">
+        insert into t_travelgroup_travelitem(travelgroup_id,travelitem_id) values(#{travelGroupId},#{travelItemId})
+    </insert>
+
+    <!--
+   分页查询   concat: 在mysql的语法中，表示字符串的连接符，like %#{value}%
+-->
+    <select id="findPage" parameterType="string" resultType="travelGroup">
+        select * from t_travelgroup
+        <where>
+            <if test="value!=null and value.length>0">
+                code =#{value} or name like "%"#{value}"%" or helpCode=#{value}
+            </if>
+        </where>
+    </select>
+
+    <!--使用id查询跟团游-->
+    <select id="findById" parameterType="int" resultType="travelGroup">
+        select * from t_travelgroup where id =#{id}
+    </select>
+
+
+    <!--使用跟团游id，查询跟团游和自由行中间表，获取自由行id的集合-->
+    <select id="findTravelItemIdByTravelgroupId" resultType="int">
+        select travelitem_id from t_travelgroup_travelitem where travelgroup_id =#{id}
+
+    </select>
+
+    <!--编辑跟团游-->
+    <update id="edit" parameterType="travelGroup">
+        update t_travelgroup
+        <set>
+            <if test="code!=null and code.length>0">
+                code = #{code},
+            </if>
+            <if test="name!=null and name.length>0">
+                name = #{name},
+            </if>
+            <if test="helpCode!=null and helpCode.length>0">
+                helpCode = #{helpCode},
+            </if>
+            <if test="sex!=null and sex.length>0">
+                sex = #{sex},
+            </if>
+            <if test="remark!=null and remark.length>0">
+                remark = #{remark},
+            </if>
+            <if test="attention!=null and attention.length>0">
+                attention = #{attention},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+
+    <!--使用跟团游id，删除自由行和跟团游中间表数据-->
+    <delete id="deleteTravelGroupAndTravelItemByTravelGroupId" parameterType="int">
+        delete from t_travelgroup_travelitem where travelgroup_id =#{id}
+    </delete>
+
+<!--查询全部-->
+    <select id="findAll" resultType="travelGroup">
+       select * from t_travelgroup
+    </select>
+
+
+    <!--根据自由行id查询中间关系表-->
+    <select id="findCountByTravelGroupId" parameterType="int" resultType="long">
+       select count(*) from t_travelgroup_travelitem where travelitem_id =#{id}
+</select>
+    <!--删除-->
+    <delete id="deleteById" parameterType="int">
+       delete from t_travelgroup where id=#{id}
+</delete>
+
+
+    <resultMap id="findTravelGroupsBySetmealIdResultMap" type="travelgroup">
+        <id column="id" property="id"/>
+        <result column="code" property="code"/>
+        <result column="name" property="name"/>
+        <result column="helpCode" property="helpCode"/>
+        <result column="sex" property="sex"/>
+        <result column="remark" property="remark"/>
+        <result column="attention" property="attention"/>
+        <!--跟团游的id作为自由行的查询条件    column="id"-->
+        <collection property="travelItems" select="com.company.dao.TravelItemDao.getTraveItemsByTravelGroupId" column="id"></collection>
+    </resultMap>
+    
+    <!--跟团游中还有自由行-->
+    <select id="findTravegroupsBySetmealId" resultMap="findTravelGroupsBySetmealIdResultMap">
+    SELECT *
+    FROM t_travelgroup
+    WHERE id IN(
+	    SELECT travelgroup_id
+	    FROM  t_setmeal_travelgroup
+	    WHERE setmeal_id =#{setmealId}
+        )
+    </select>
+
+
+</mapper>

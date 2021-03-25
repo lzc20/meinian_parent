@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.company.dao.SetmealDao">
+
+    <insert id="add" useGeneratedKeys="true" keyProperty="id">
+         insert into t_setmeal(
+               name, code, helpCode, sex, age, price, remark, attention, img
+
+          ) values(
+              #{name}, #{code}, #{helpCode}, #{sex}, #{age}, #{price}, #{remark}, #{attention}, #{img}
+          )
+    </insert>
+    <insert id="insert_setmeal_travelgroup">
+         insert into t_setmeal_travelgroup(setmeal_id,travelgroup_id) values(#{setmealId},#{travelgroupId})
+    </insert>
+    <select id="findPage" resultType="setmeal">
+        select * from t_setmeal
+        <if test="value!=null">
+            code=#{value} or helpcode=#{value} or name like concat('%',#{value},'%')
+        </if>
+    </select>
+
+    <select id="getSetmeal" resultType="setmeal">
+        select * from t_setmeal
+    </select>
+
+    <!--
+        resultType="" 自动映射
+        resultMap="" 手动映射
+        映射是：数据库中的表（字段），和实体类（属性）
+    -->
+
+    <resultMap id="findByIdResultMap" type="setmeal">
+        <id column="id" property="id"/><!--主键-->
+        <result column="name" property="name"/>
+        <result column="code" property="code"/>
+        <result column="helpCode" property="helpCode"/>
+        <result column="sex" property="sex"/>
+        <result column="age" property="age"/>
+        <result column="price" property="price"/>
+        <result column="remark" property="remark"/>
+        <result column="attention" property="attention"/>
+        <result column="img" property="img"/>
+
+        <!--一对多    查询当前跟团游的集合     分步查询 column="id" 查询条件
+
+                select ="" 是调用查询跟团游的方法
+        -->
+        <collection property="travelGroups" select="com.company.dao.TravelGroupDao.findTravegroupsBySetmealId" column="id">
+
+        </collection>
+
+    </resultMap>
+
+    <select id="findById" resultMap="findByIdResultMap">
+        select * from t_setmeal where id=#{id}
+    </select>
+
+
+    <select id="getSetmealById" resultType="setmeal">
+        select * from t_setmeal where id=#{id}
+    </select>
+
+    <select id="querySetmeal" resultType="map">
+      select setmeal.`name` name,count(setmeal.`name`) value
+	from
+	t_setmeal setmeal ,t_order order1
+	WHERE setmeal.id=order1.setmeal_id
+	GROUP BY setmeal.`name`
+</select>
+</mapper>

@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:dubbo="http://code.alibabatech.com/schema/dubbo"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xmlns:security="http://www.springframework.org/schema/security"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                  http://www.springframework.org/schema/beans/spring-beans.xsd
+                  http://www.springframework.org/schema/mvc
+                  http://www.springframework.org/schema/mvc/spring-mvc.xsd
+                  http://code.alibabatech.com/schema/dubbo
+                  http://code.alibabatech.com/schema/dubbo/dubbo.xsd
+                  http://www.springframework.org/schema/context
+                  http://www.springframework.org/schema/context/spring-context.xsd
+                          http://www.springframework.org/schema/security
+                          http://www.springframework.org/schema/security/spring-security.xsd">
+
+    <!--
+      ① 配置哪些链接可以放行(没有认证通过也可以访问的资源)
+      security="none"：没有权限
+      pattern="/login.html"：没有任何权限，可以访问login.html
+    -->
+    <!--<security:http security="none" pattern="/login.html"></security:http>-->
+
+    <!--
+    ② 定义哪些链接不可以放行(必须通过认证才能访问的资源)，及需要有角色，有权限才可以放行访问资源
+    <security:http auto-config="true" use-expressions="true">
+          auto-config="true":开启自动配置 由springsecurity提供登录页面，提供登录的url地址，退出的url地址
+          use-expressions="true"：使用表达式的方式控制权限
+             security:intercept-url：定义哪些链接不可以放行，需要当前角色和权限才能放行
+                pattern="/**"：要求系统中的所有资源，都必须通过角色和权限才能访问
+                access：指定角色和权限
+                   如果使用表达式use-expressions="true"
+                       access="hasRole('ROLE_ADMIN')：表示具有ROLE_ADMIN的角色才能访问系统的资源
+                   如果不使用表达式use-expressions="false"
+                       access="ROLE_ADMIN：表示具有ROLE_ADMIN的角色才能访问系统的资源
+    -->
+   <context:component-scan base-package="com.company"/>
+    <!--支持注解驱动-->
+    <mvc:annotation-driven />
+    <!--开启注解方式权限控制-->
+    <security:global-method-security pre-post-annotations="enabled" />
+
+    <!--指定项目中的静态资源可以匿名访问-->
+    <security:http security="none" pattern="/login.html" />
+    <security:http pattern="/js/**" security="none"/>
+    <security:http pattern="/img/**" security="none"/>
+    <!--授权-->
+    <security:http auto-config="true" use-expressions="true">
+
+
+
+        <!--pattern 项目资源控制器 access：访问使用的条件，hashRole 如果具备ROLE_ADMIN角色-->
+<!--        <security:intercept-url pattern="/**" access="hasRole('ROLE_ADMIN')"></security:intercept-url>-->
+        <!--如果登录成功就可以访问index。html-->
+        <security:intercept-url pattern="/index.html" access="isAuthenticated()"/>
+        <!--如果登录成功 并且含有add权限就可以 访问-->
+        <security:intercept-url pattern="/A.html" access="hasAnyAuthority('add')"/>
+        <security:intercept-url pattern="/B.html" access="hasAnyAuthority('delete')"/>
+        <!--没有相应权限ABC 访问失败 403错误-->
+        <security:intercept-url pattern="/C.html" access="hasAnyAuthority('ABC')"/>
+        <security:form-login login-page="/login.html"
+                             username-parameter="username"
+                             password-parameter="password"
+                             login-processing-url="/login.do"
+                             default-target-url="/index.html"
+                             authentication-failure-url="/login.html"
+                             always-use-default-target="true"/>
+        <!--
+            csrf：对应CsrfFilter过滤器
+            disabled：是否启用CsrfFilter过滤器，如果使用自定义登录页面需要关闭此项，否则登录操作会被禁用（403）
+        -->
+        <security:logout logout-url="/logout.do" logout-success-url="/login.html" invalidate-session="true"/>
+        <security:csrf disabled="true"/>
+
+    </security:http>
+
+    <!--
+      ③ 认证管理：定义登录账号和密码，并授予当前用户访问的角色或权限
+        （1）：将用户名和密码：当前用户具有的角色，写死到配置文件中（现在:入门）
+                security:user name="admin" :登录名
+                authorities="ROLE_ADMIN"   ：角色(ROLE_ADMIN),权限
+                password="admin"          ：密码
+         （2）：用户名和密码，当前用户具有的角色，从数据库中查询（后续）
+    -->
+    <!--认证-->
+    <!--认证(登录)-->
+    <security:authentication-manager>
+
+        <!--认证的提供者(处理登录的是谁)-->
+        <security:authentication-provider user-service-ref="userService">
+            <security:password-encoder ref="bCryptPasswordEncoder"></security:password-encoder>
+        </security:authentication-provider>
+    </security:authentication-manager>
+    <bean id="bCryptPasswordEncoder" class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder"></bean>
+
+
+
+
+</beans>
